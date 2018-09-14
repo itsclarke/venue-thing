@@ -1,18 +1,19 @@
 import React, { Component } from 'react'
-import { withScriptjs, withGoogleMap, GoogleMap, Marker } from 'react-google-maps'
 import axios from 'axios'
 
-const _CLIENTID = 'ZBROKXLXL5T5ZPA420JYZOSBWVAJ1MN3TU20MABZRRJL452Z'
-const _CLIENTSECRET = 'OPKNNENJICEGOQ4AZYBDXNHVCKMKF1XSJTBJZA1HHQEQHUI1'
+const SpotList = spots => {
+  const listItems = Object.values(spots.spots).map((spot, index) => {
+    return (
+      <li key={index}>{spot.name}</li>
+    )
+  })
 
-const MyMapComponent = withScriptjs(withGoogleMap((props) =>
-  <GoogleMap
-    defaultZoom={14}
-    defaultCenter={{ lat: 40.0242303, lng: -105.2835281 }}
-  >
-    <Marker position={{ lat: 40.0242303, lng: -105.2835281 }} />
-  </GoogleMap>
-))
+  return (
+    <ul>
+      {listItems}
+    </ul>
+  )
+}
 
 class App extends Component {
   
@@ -23,7 +24,8 @@ class App extends Component {
         latitude: 41.8333925,
         longitude: -88.0121478
       },
-      spots: []
+      spots: [],
+      mapping: false
     }
     this.getLocation = this.getLocation.bind(this)
   }
@@ -35,6 +37,7 @@ class App extends Component {
   }
 
   mapSpots = objects => {
+    this.setState({ mapping: true })
     let spots = objects.map(spot => {
       let s = {
         latitude: spot.location.lat,
@@ -44,20 +47,23 @@ class App extends Component {
       }
       return s
     })
-
     Promise.all([spots])
       .then(() => {
-        this.setState({ spots })
+        this.setState({ spots, mapping: false })
       })
   }
 
-  showPosition = (position) => {
-    this.setState({
+  showPosition = position => {
+    let newLocation = this.setState({
       location: {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude
       }
     })
+    Promise.all([newLocation])
+      .then(() => {
+        this.fetchVenues()
+      })
   }
 
   fetchVenues = () => {
@@ -80,13 +86,7 @@ class App extends Component {
     return (
       <div>
         <h1><pre>{this.state.location.latitude}, {this.state.location.longitude}</pre></h1>
-        <MyMapComponent
-          isMarkerShown
-          googleMapURL="https://maps.googleapis.com/maps/api/js?key=AIzaSyC4R6AN7SmujjPUIGKdyao2Kqitzr1kiRg&v=3.exp&libraries=geometry,drawing,places"
-          loadingElement={<div style={{ height: `100%` }} />}
-          containerElement={<div style={{ height: `100%` }} />}
-          mapElement={<div style={{ minHeight: `100vh` }} />}
-        />
+        {(this.state.spots != null) ? <SpotList spots={this.state.spots} /> : <h3>Nothing here</h3>}
       </div>
     )
   }
